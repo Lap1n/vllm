@@ -84,14 +84,12 @@ class BaseLogitsProcessor:
         return scores
 
 
-class RegexLogitsProcessor(BaseLogitsProcessor):
+@cache()
+def _get_regex_guide(regex_string: str,tokenizer: PreTrainedTokenizerBase) -> Guide:
+    tokenizer = _adapt_tokenizer(tokenizer)
+    return RegexGuide(regex_string, tokenizer)
 
-    @classmethod
-    @cache()
-    def _get_guide(cls, regex_string: str,
-                   tokenizer: PreTrainedTokenizerBase) -> Guide:
-        tokenizer = _adapt_tokenizer(tokenizer)
-        return RegexGuide(regex_string, tokenizer)
+class RegexLogitsProcessor(BaseLogitsProcessor):
 
     def __init__(self, regex_string: str, tokenizer: PreTrainedTokenizerBase):
         """Compile the FSM that drives the regex-structured generation.
@@ -104,8 +102,7 @@ class RegexLogitsProcessor(BaseLogitsProcessor):
             The model's tokenizer
 
         """
-        super().__init__(
-            RegexLogitsProcessor._get_guide(regex_string, tokenizer))
+        super().__init__(_get_regex_guide(regex_string, tokenizer))
 
 
 class JSONLogitsProcessor(RegexLogitsProcessor):
@@ -143,13 +140,12 @@ class JSONLogitsProcessor(RegexLogitsProcessor):
         super().__init__(regex_string, tokenizer)
 
 
-class CFGLogitsProcessor(BaseLogitsProcessor):
+@cache()
+def _get_cfg_guide(cfg: str, tokenizer: PreTrainedTokenizerBase) -> Guide:
+    tokenizer = _adapt_tokenizer(tokenizer)
+    return CFGGuide(cfg, tokenizer)
 
-    @classmethod
-    @cache()
-    def _get_guide(cls, cfg: str, tokenizer: PreTrainedTokenizerBase) -> Guide:
-        tokenizer = _adapt_tokenizer(tokenizer)
-        return CFGGuide(cfg, tokenizer)
+class CFGLogitsProcessor(BaseLogitsProcessor):
 
     def __init__(self, cfg: str, tokenizer: PreTrainedTokenizerBase):
         """Compile the FSM that drives the context free grammar generation.
@@ -162,7 +158,7 @@ class CFGLogitsProcessor(BaseLogitsProcessor):
             The model's tokenizer
 
         """
-        super().__init__(CFGLogitsProcessor._get_guide(cfg, tokenizer))
+        super().__init__(_get_cfg_guide(cfg, tokenizer))
         self._guide = self._guide.copy()
 
 
